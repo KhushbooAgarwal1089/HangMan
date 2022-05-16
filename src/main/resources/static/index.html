@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	
+</head>
+<body>
+	<h1>
+		<div class="container">Welcome to Hangman Game</div>
+	</h1>
+
+	<div>
+		<button id="start" type="button" onclick="startGame()">Start Game</button>
+	</div>
+
+	<div id="gameView" style="display: none">
+		<h3>
+			Game Status: <span id="gameStatus"></span>
+		</h3>
+		<div id="gameBoard">
+		<h3>
+			Word to guess: <span id="secrectWord"></span>
+		</h3>
+		<div id="word"></div>
+		<h4>
+			<span id="guessesLeft"></span> guesses left
+		</h4>
+		<h4>Choose a letter:</h4>
+		<div id="alphabets"></div>
+		</div>
+	</div>
+
+	<script>
+	var gameData = '';
+		function startGame() {
+			$('#gameStatus').empty();
+			$('#alphabets').empty();
+			$.ajax({
+				url : 'getHangmanBorad',
+				type : 'POST',
+				dataType : 'json',
+				success : function(data) {
+					getAlphabets(data.alphabets);
+					$('#guessesLeft').text(data.guessesLeft);
+					$('#secrectWord').text(data.secrectWord);
+					$('#gameStatus').text(data.gameStatus);
+					$('#gameView').show();
+					$('#gameBoard').show();
+					gameData=JSON.stringify(data);
+				}
+			});
+		}
+		
+		function getAlphabets(alphabets) {
+		    $(alphabets).each(function () {
+		        var letter = $(this)[0],
+		            button = '<input class=\"chosenLetter\" type=\"button\" name=\"' + letter + '\" id=\"' + letter + '\" value=\"' + letter + '\">';
+		        $('#alphabets').append(button);
+		    });
+		}
+		
+		$(document).on('click', '.chosenLetter', function () {
+			 var characterChosen = $(this).val();
+			 updateHangmanBorad(characterChosen);
+		});
+		
+		function updateHangmanBorad(letter){
+			var gameStatus = document.getElementById("gameStatus").innerText;
+			$('#alphabets').empty();
+			$('#guessesLeft').empty();
+			$('#secrectWord').empty();
+			$('#gameStatus').empty();
+			$.ajax({
+				url : 'updateHangmanBorad/' + letter,
+				type : 'POST',
+				dataType : 'json',
+				contentType: 'application/json',
+				data: gameData,
+				success : function(responseData) {
+					getAlphabets(responseData.alphabets);
+					$('#guessesLeft').text(responseData.guessesLeft);
+					$('#secrectWord').text(responseData.secrectWord);
+					$('#gameStatus').text(responseData.gameStatus);
+					$('#gameView').show();
+					if(responseData.gameStatus!=='ACTIVE'){
+						$('#gameBoard').hide();		
+					}
+					gameData=JSON.stringify(responseData);
+				}
+			});
+			
+		}
+
+	</script>
+</body>
+</html>
